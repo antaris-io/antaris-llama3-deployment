@@ -6,15 +6,23 @@ import json
 import os
 from transformers import  AutoTokenizer
 from vllm import LLM
+import boto3
 
 # local imports
 from .jsonformer import Jsonformer
 from .processing import Preprocessor
 
+# Define the S3 bucket and model path
+S3_BUCKET = "s3://253333439226-app-registry/llama3"
+S3_BASE_MODEL_PATH = "Meta-Llama-3-8B-hf"
+S3_MODEL_PATH = "Meta-Llama-3-8B-hf-finetuned"
+
 
 basepath = os.path.dirname(__file__)
-BASE_MODEL = os.path.join(basepath, "../Meta-Llama-3-8B-hf")
-MODEL_PATH = os.path.join(basepath, "../Meta-Llama-3-8B-hf-finetuned")
+#BASE_MODEL = os.path.join(basepath, "../Meta-Llama-3-8B-hf")
+#MODEL_PATH = os.path.join(basepath, "../Meta-Llama-3-8B-hf-finetuned")
+BASE_MODEL = "/opt/ml/base_model"
+MODEL_PATH = "/opt/ml/fine_tuned_model"
 JSON_SCHEME_PATH = os.path.join(basepath, "json_scheme.json")
 PROMP_PATH = os.path.join(basepath, "prompt.txt")
 MODEL_SIZE = 4*2048
@@ -30,11 +38,25 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 # SageMaker Inference Functions
 # ============================================================
 
+def download_model_from_s3():
+    s3 = boto3.client('s3')
+    if not os.path.exists('/opt/ml/model'):
+        os.makedirs('/opt/ml/model')
+    # Download folders from S3
+    s3.download_file(S3_BUCKET, S3_BASE_MODEL_PATH, '/opt/ml/base_model')
+    s3.download_file(S3_BUCKET, S3_MODEL_PATH, '/opt/ml/fine_tuned_model')
+
+
+
+
 def model_fn(model_dir):
     """
     This function is the first to get executed upon a prediction request,
     it loads the model from the disk and returns the model object which will be used later for inference.
     """
+
+    # Download model from S3
+    download_model_from_s3()
 
     # Load the model
     model = LLM(BASE_MODEL, enable_lora=True, max_lora_rank=64)

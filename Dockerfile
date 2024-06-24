@@ -1,17 +1,14 @@
 FROM python:3.9-slim
 
-# Install Python dependencies
-COPY requirements.txt .
-RUN python3 -m pip install --upgrade pip
-RUN pip install --no-cache-dir -v -r requirements.txt
-
 # Create a directory for the app
 WORKDIR /opt/ml
 
 # Copy your model and inference code
-COPY Meta-Llama-3-8B-hf /opt/ml/Meta-Llama-3-8B-hf
-COPY Meta-Llama-3-8B-hf-finetuned /opt/ml/Meta-Llama-3-8B-hf
 COPY code /opt/ml/code
+
+# Install Python dependencies
+RUN python3 -m pip install --upgrade pip
+RUN pip install --no-cache-dir -v -r /opt/ml/code/requirements.txt
 
 # Set the environment variables for SageMaker
 ENV SAGEMAKER_PROGRAM inference.py

@@ -7,3 +7,4 @@ bitsandbytes
 nltk
 sentencepiece
 vllm
+boto3
