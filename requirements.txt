@@ -1,0 +1,9 @@
+transformers
+torch
+accelerate
+peft
+trl
+bitsandbytes
+nltk
+sentencepiece
+vllm

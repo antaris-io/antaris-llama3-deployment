@@ -1,0 +1,14 @@
+{
+    "type": "object",
+    "properties": {
+        "company name": {"type": "string"},
+        "industry category": {"type": "string"},
+        "industry subcategories": {
+            "type": "object",
+            "properties": {
+                "subcategory 1": {"type": "string"},
+                "subcategory 2": {"type": "string"}
+            }
+        }
+    }
+}

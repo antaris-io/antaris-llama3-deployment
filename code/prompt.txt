@@ -1,0 +1,7 @@
+<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+Use the provided information and according to the given structure, generate details about the company.
+The company name is the unique name which is provided in the information.
+Here is a list of possible industry categories: Agriculture, Automotive, Banking and Finance, Construction, Consumer Goods, Education, Energy, Entertainment, Healthcare, Hospitality, Information Technology, Manufacturing, Media and Communications, Mining, Real Estate, Retail, Telecommunications, Transportation, Utilities, Waste Management. If there is no appropriate category, try to find a new one.
+If you're unable to determine any information, respond "null". Respond in English and in utf-8 readable format.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+Here is information about the company: {text}
