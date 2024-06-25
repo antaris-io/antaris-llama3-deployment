@@ -7,10 +7,11 @@ import os
 from transformers import  AutoTokenizer
 from vllm import LLM
 import boto3
+from cloudpathlib import CloudPath
 
 # local imports
-from .jsonformer import Jsonformer
-from .processing import Preprocessor
+from jsonformer import Jsonformer
+from processing import Preprocessor
 
 # Define the S3 bucket and model path
 S3_BUCKET = "s3://253333439226-app-registry/llama3"
@@ -29,8 +30,7 @@ MODEL_SIZE = 4*2048
 USE_RELAY = True
 
 
-# Load tokenizer
-tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+
 
 
 
@@ -39,12 +39,12 @@ tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
 # ============================================================
 
 def download_model_from_s3():
-    s3 = boto3.client('s3')
-    if not os.path.exists('/opt/ml/model'):
-        os.makedirs('/opt/ml/model')
-    # Download folders from S3
-    s3.download_file(S3_BUCKET, S3_BASE_MODEL_PATH, '/opt/ml/base_model')
-    s3.download_file(S3_BUCKET, S3_MODEL_PATH, '/opt/ml/fine_tuned_model')
+    cp = CloudPath(f"{S3_BUCKET}/{S3_BASE_MODEL_PATH}")
+    cp.download_to(BASE_MODEL, overwrite=True)
+
+    cp = CloudPath(f"{S3_BUCKET}/{S3_MODEL_PATH}")
+    cp.download_to(MODEL_PATH, overwrite=True)
+
 
 
 
@@ -61,7 +61,10 @@ def model_fn(model_dir):
     # Load the model
     model = LLM(BASE_MODEL, enable_lora=True, max_lora_rank=64)
 
-    return model
+    # Load tokenizer
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+
+    return model, tokenizer
 
 
 def input_fn(text, request_content_type):
@@ -78,6 +81,9 @@ def input_fn(text, request_content_type):
         json_scheme = json.load(f)
 
     if request_content_type == "text/csv":
+        # Load tokenizer
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH)
+
         # get the number of tokens
         tokens_offset = len(tokenizer.encode(f"""{prompt_raw.format(text="")} {str(json_scheme)}"""))
         processor = Preprocessor(tokenizer, MODEL_SIZE-2*tokens_offset)
@@ -88,7 +94,7 @@ def input_fn(text, request_content_type):
     raise ValueError(f"Content type {request_content_type} is not supported")
 
 
-def predict_fn(prompt, model):
+def predict_fn(prompt, model_tokenizer):
     """
     This function takes in the input data and the model returned by the model_fn
     It gets executed after the model_fn and its output is returned as the API response.
@@ -98,7 +104,7 @@ def predict_fn(prompt, model):
     with open(JSON_SCHEME_PATH, "r") as f:
         json_scheme = json.load(f)
 
-    jsonformer = Jsonformer(model, tokenizer, json_scheme, prompt, temperature=0.2, device="cuda", use_relay=USE_RELAY, lora_path=MODEL_PATH)
+    jsonformer = Jsonformer(model_tokenizer[0], model_tokenizer[1], json_scheme, prompt, temperature=0.2, device="cuda", use_relay=USE_RELAY, lora_path=MODEL_PATH)
 
     return jsonformer()
 
@@ -109,3 +115,26 @@ def output_fn(prediction, accept):
     """
 
     return json.dumps(prediction), accept
+
+
+
+def handle_health_check():
+    return "Healthy"
+
+if __name__ == '__main__':
+    # Add code to handle health check requests if needed
+    from flask import Flask, request, jsonify
+    app = Flask(__name__)
+
+    @app.route('/ping', methods=['GET'])
+    def ping():
+        return handle_health_check()
+
+    @app.route('/invocations', methods=['POST'])
+    def invoke():
+        data = input_fn(request.data, request.content_type)
+        prediction = predict_fn(data, model_fn('/opt/ml/model'))
+        result = output_fn(prediction, 'application/json')
+        return result
+
+    app.run(host='0.0.0.0', port=8080)

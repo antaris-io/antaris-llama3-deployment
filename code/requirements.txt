@@ -8,3 +8,4 @@ nltk
 sentencepiece
 vllm
 boto3
+cloudpathlib

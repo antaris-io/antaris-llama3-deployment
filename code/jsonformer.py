@@ -8,7 +8,7 @@ import json
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
 
-from .logits_processors import (
+from logits_processors import (
     NumberStoppingCriteria,
     OutputNumbersTokens,
     StringStoppingCriteria,
