@@ -2,17 +2,19 @@
 Adapted from:
 https://github.com/1rgs/jsonformer/jsonformer/main.py
 """
+from logits_processors import (
+    NumberStoppingCriteria,
+    OutputNumbersTokens,
+    StringStoppingCriteria,
+)
+
 from typing import List, Union, Dict, Any
 from transformers import PreTrainedModel, PreTrainedTokenizer
 import json
 from vllm import LLM, SamplingParams
 from vllm.lora.request import LoRARequest
 
-from logits_processors import (
-    NumberStoppingCriteria,
-    OutputNumbersTokens,
-    StringStoppingCriteria,
-)
+
 
 
 GENERATION_MARKER = "|GENERATION|"

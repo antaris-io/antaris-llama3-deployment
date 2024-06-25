@@ -1,0 +1,4 @@
+To build docker image and upload it to ECR, run the following command:
+```
+bash create-endpoint.sh
+```
