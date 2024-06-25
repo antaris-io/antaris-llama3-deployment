@@ -14,6 +14,7 @@ from vllm import LLM
 import boto3
 from cloudpathlib import CloudPath
 import logging
+from flask import Flask, request, jsonify
 
 
 # Define the S3 bucket and model path
@@ -30,6 +31,8 @@ PROMP_PATH = os.path.join(BASEPATH, "prompt.txt")
 MODEL_SIZE = 4*2048
 USE_RELAY = True
 
+# set up flask
+app = Flask(__name__)
 
 
 # ============================================================
@@ -114,3 +117,22 @@ def output_fn(prediction, accept):
     """
 
     return json.dumps(prediction), accept
+
+
+
+# ============================================================
+@app.route('/ping', methods=['GET'])
+def ping():
+    health = True
+    status = 200 if health else 404
+    return jsonify(status=status)
+
+@app.route('/invocations', methods=['POST'])
+def invoke():
+    data = input_fn(request.data, request.content_type)
+    prediction = predict_fn(data, model_fn('/opt/ml/model'))
+    result = output_fn(prediction, 'application/json')
+    return result
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8080)

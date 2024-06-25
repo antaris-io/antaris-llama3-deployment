@@ -1,6 +1,7 @@
 # doc: https://docs.aws.amazon.com/sagemaker/latest/dg/serverless-endpoints-create.html
 
 # upload model checkpoint to S3
+#echo "Uploading model checkpoint to S3"
 #aws s3 cp Meta-Llama-3-8B-hf/ s3://253333439226-app-registry/llama3/Meta-Llama-3-8B-hf/ --recursive
 #aws s3 cp Meta-Llama-3-8B-hf-finetuned/ s3://253333439226-app-registry/llama3/Meta-Llama-3-8B-hf-finetuned/ --recursive
 
@@ -12,16 +13,12 @@ echo "Building docker image"
 sudo docker build -t llama3-deployment .
 
 # tag docker image
+echo "Tagging docker image"
 sudo docker tag llama3-deployment:latest 253333439226.dkr.ecr.eu-central-1.amazonaws.com/llama3-deployment:latest
-
-# delete old docker image on ECR
-echo "Deleting old docker image"
-sudo docker rmi 253333439226.dkr.ecr.eu-central-1.amazonaws.com/llama3-deployment:latest
 
 # push docker image
 echo "Pushing docker image"
 sudo docker push 253333439226.dkr.ecr.eu-central-1.amazonaws.com/llama3-deployment:latest
-
 
 # remove old model
 echo "Deleting old model"
@@ -57,8 +54,8 @@ aws sagemaker create-endpoint-config \
     --region eu-central-1
 
 # create an endpoint
-echo "Creating endpoint"
-aws sagemaker create-endpoint \
-    --endpoint-name llama3-html-to-json \
-    --endpoint-config-name llama3-html-to-json \
-    --region eu-central-1
+# echo "Creating endpoint"
+# aws sagemaker create-endpoint \
+#     --endpoint-name llama3-html-to-json \
+#     --endpoint-config-name llama3-html-to-json \
+#     --region eu-central-1
